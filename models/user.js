@@ -18,6 +18,9 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
     },
+    photoUrl:{
+      type:String
+    }
   },
   { timestamps: true }
 );

@@ -15,8 +15,10 @@ app.use(
 );
 
 const oauthRouter = require("./routes/oauth");
+const profileRouter = require("./routes/profile");
 
 app.use("/", oauthRouter);
+app.use("/", profileRouter);
 
 initialiseDataBase();
 

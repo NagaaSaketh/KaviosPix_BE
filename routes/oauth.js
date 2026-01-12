@@ -10,10 +10,8 @@ const oauthRouter = express.Router();
 
 oauthRouter.use(cookieParser());
 
-// This endpoint should verify JWT token, not Google access token
 oauthRouter.get("/user/profile", verifyAccessToken, async (req, res) => {
   try {
-    // req.user should be set by verifyAccessToken middleware
     const user = await User.findById(req.user._id).select("-password");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -108,6 +106,8 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         userID: String(googleData.id),
         emailID: primaryEmail,
         password: hashedPassword,
+        name: googleData.name,
+        photoUrl:googleData.picture,
       });
 
       await newUser.save();
@@ -123,12 +123,18 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         sameSite: "lax",
       });
 
-      return res.redirect(`${process.env.FRONTEND_URL}/profile`);
+      return res.redirect(`${process.env.FRONTEND_URL}/home`);
     }
   } catch (err) {
     console.error("Google OAuth error:", err.response?.data || err.message);
     return res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
   }
 });
+
+oauthRouter.post("/logout",async(req,res)=>{
+    res.cookie("token",null,{expires:new Date(Date.now())});
+    res.status(200).send("Logout Successful!")
+})
+
 
 module.exports = oauthRouter;

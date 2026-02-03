@@ -4,7 +4,7 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const { verifyAccessToken } = require("../middlewares/oauth");
 const bcrypt = require("bcrypt");
-const { User } = require("../models/user");
+const User = require("../models/user.model");
 
 const oauthRouter = express.Router();
 
@@ -16,7 +16,7 @@ oauthRouter.get("/user/profile", verifyAccessToken, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.json({ user });
+    res.json(user);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch profile" });
   }
@@ -107,7 +107,7 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         emailID: primaryEmail,
         password: hashedPassword,
         name: googleData.name,
-        photoUrl:googleData.picture,
+        photoUrl: googleData.picture,
       });
 
       await newUser.save();
@@ -123,7 +123,7 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         sameSite: "lax",
       });
 
-      return res.redirect(`${process.env.FRONTEND_URL}/home`);
+      return res.redirect(`${process.env.FRONTEND_URL}/`);
     }
   } catch (err) {
     console.error("Google OAuth error:", err.response?.data || err.message);
@@ -131,10 +131,47 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
   }
 });
 
-oauthRouter.post("/logout",async(req,res)=>{
-    res.cookie("token",null,{expires:new Date(Date.now())});
-    res.status(200).send("Logout Successful!")
-})
+oauthRouter.post("/login", async (req, res) => {
+  try {
+    const { emailID } = req.body;
 
+    if (!emailID) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ emailID }).select("-password");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      message: "Login Successfull",
+      user,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "login failed" });
+  }
+});
+
+oauthRouter.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+  res.status(200).send("Logout successful");
+});
 
 module.exports = oauthRouter;

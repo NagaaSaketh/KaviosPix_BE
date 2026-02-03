@@ -4,8 +4,10 @@ dotenv.config();
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const app = express();
+const cookieParser = require("cookie-parser");
 const { initialiseDataBase } = require("./db/db.connect");
 app.use(express.json());
+app.use(cookieParser());
 
 app.use(
   cors({
@@ -16,9 +18,11 @@ app.use(
 
 const oauthRouter = require("./routes/oauth");
 const profileRouter = require("./routes/profile");
+const albumRouter = require("./routes/album");
 
 app.use("/", oauthRouter);
 app.use("/", profileRouter);
+app.use("/", albumRouter);
 
 initialiseDataBase();
 

@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema(
     userID: {
       type: String,
       unique: true,
-      sparse: true,
     },
     emailID: {
       type: String,
@@ -18,13 +17,13 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
     },
-    photoUrl:{
-      type:String
-    }
+    photoUrl: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);
 
-module.exports = { User };
+module.exports = User;

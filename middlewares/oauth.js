@@ -1,9 +1,10 @@
 const jwt = require("jsonwebtoken");
-const { User } = require("../models/user");
+const User = require("../models/user.model");
 
 const verifyAccessToken = async (req, res, next) => {
   try {
     const token = req.cookies.token;
+    
 
     if (!token) {
       return res.status(401).json({ error: "No token provided" });
@@ -17,7 +18,9 @@ const verifyAccessToken = async (req, res, next) => {
       return res.status(401).json({ error: "User not found" });
     }
 
-    req.user = user; 
+    req.user = user;
+    
+
     next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });

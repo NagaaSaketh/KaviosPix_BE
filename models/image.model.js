@@ -38,6 +38,7 @@ const imageSchema = new mongoose.Schema(
     ],
     size: {
       type: Number,
+      required: true,
     },
   },
   { timestamps: true },

@@ -28,6 +28,135 @@ albumRouter.post("/albums", verifyAccessToken, async (req, res) => {
   }
 });
 
+albumRouter.get("/albums", verifyAccessToken, async (req, res) => {
+  try {
+    const ownerID = req.user._id;
+    const userEmail = req.user.emailID;
+
+    if (!ownerID) {
+      return res.status(403).json({ message: "You are unauthorised" });
+    }
+    const albums = await Album.find({
+      $or: [{ ownerID }, { "sharedUsers.emailID": userEmail }],
+    });
+    if (albums.length != 0) {
+      return res.status(200).json(albums);
+    } else {
+      return res.status(404).json({ message: "No albums found" });
+    }
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Failed to fetch albums", error: err.message });
+  }
+});
+
+albumRouter.get(
+  "/albums/:albumID/images/favorites",
+  verifyAccessToken,
+  async (req, res) => {
+    try {
+      const ownerID = req.user._id;
+      const { albumID } = req.params;
+
+      const album = await Album.findOne({ albumID });
+
+      if (!album) {
+        return res.status(404).json({ message: "No album found!" });
+      }
+
+      const isOwner = album.ownerID.toString() === ownerID.toString();
+
+      const isShared = album.sharedUsers?.some(
+        (user) => user.emailID === userEmail,
+      );
+
+      if (!isOwner && !isShared) {
+        return res
+          .status(403)
+          .json({ message: "You are unauthorised to access!" });
+      }
+
+      const images = await Image.find({
+        albumID: album._id,
+        isFavorite: true,
+      });
+
+      if (images.length != 0) {
+        return res.status(200).json(images);
+      } else {
+        return res.status(404).json({ message: "No favorite images found!" });
+      }
+    } catch (err) {
+      res.status(500).json({
+        message: "Failed to fetch favorite images",
+        error: err.message,
+      });
+    }
+  },
+);
+
+albumRouter.get(
+  "/albums/:albumID/images",
+  verifyAccessToken,
+  async (req, res) => {
+    try {
+      const ownerID = req.user._id;
+      const { albumID } = req.params;
+      const userEmail = req.user.emailID;
+      const { tags } = req.query;
+
+      const album = await Album.findOne({ albumID });
+
+      if (!album) {
+        return res.status(404).json({ message: "No album found!" });
+      }
+
+      const isOwner = album.ownerID.toString() === ownerID.toString();
+
+      const isShared = album.sharedUsers?.some(
+        (user) => user.emailID === userEmail,
+      );
+
+      if (!isOwner && !isShared) {
+        return res.status(403).json({
+          message: "You are unauthorised to access!",
+        });
+      }
+
+      // Building query param
+      const query = {
+        albumID: album._id,
+      };
+
+      if (tags) {
+        const tagArray = tags.split(",");
+
+        if (tagArray.length === 1) {
+          query.tags = tagArray[0]; // exact tag match
+        } else {
+          query.tags = { $all: tagArray }; // multiple exact tags
+        }
+      }
+
+      const images = await Image.find(query);
+
+      if (images.length === 0) {
+        return res.status(404).json({
+          message: "No images found!",
+        });
+      }
+
+      return res.status(200).json(images);
+    } catch (err) {
+      return res.status(500).json({
+        message: "Failed to fetch images",
+        error: err.message,
+      });
+    }
+  },
+);
+
 albumRouter.put("/albums/:albumID", verifyAccessToken, async (req, res) => {
   const { albumID } = req.params;
   const userID = req.user._id;
@@ -171,12 +300,10 @@ albumRouter.delete("/albums/:albumID", verifyAccessToken, async (req, res) => {
 
     await Album.deleteOne({ albumID });
 
-    res
-      .status(200)
-      .json({
-        message: "Album deleted successfully!",
-        deletedAlbum: album.name,
-      });
+    res.status(200).json({
+      message: "Album deleted successfully!",
+      deletedAlbum: album.name,
+    });
   } catch (err) {
     res.status(500).json({
       message: "Failed to delete album",

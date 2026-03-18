@@ -33,7 +33,18 @@ const imageSchema = new mongoose.Schema(
 
     comments: [
       {
-        type: String,
+        userID: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        comment: {
+          type: String,
+          required: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     size: {

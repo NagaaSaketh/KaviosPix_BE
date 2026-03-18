@@ -68,7 +68,7 @@ imageRouter.post(
 
       const image = new Image({
         albumID: album._id,
-        name: req.file.originalname,
+        name: req.file.filename,
         tags: parsedTags,
         person,
         isFavorite,
@@ -121,7 +121,7 @@ imageRouter.put(
         });
       }
 
-      if (album.ownerID.toString() !== ownerID.toString()) {
+      if (album.ownerID.toString() !== userID.toString()) {
         return res.status(403).json({
           message: "Only album owner can favorite images",
         });
@@ -152,7 +152,10 @@ imageRouter.post(
       const { comment } = req.body;
       const ownerID = req.user._id;
 
-      const image = await Image.findOne({ imageID });
+      const image = await Image.findOne({ imageID }).populate(
+        "comments.userID",
+        "name photoUrl",
+      );
       if (!image) {
         return res.status(404).json({ message: "No image found" });
       }
@@ -174,17 +177,29 @@ imageRouter.post(
         });
       }
 
-      // Checking owner is the user to comment
-      if (album.ownerID.toString() !== ownerID.toString()) {
-        return res.status(403).json({ message: "You are unauthorised!" });
+      const isOwner = album.ownerID.equals(ownerID);
+
+      const isSharedUser = album.sharedUsers?.some(
+        (user) => user.userID?.toString() === ownerID.toString(),
+      );
+
+      if (!isOwner && !isSharedUser) {
+        return res.status(403).json({
+          message: "You are not authorised to comment.",
+        });
       }
 
-      image.comments.push(comment);
+      image.comments.push({ userID: ownerID, comment });
       await image.save();
+
+      const updatedImage = await Image.findOne({ imageID }).populate(
+        "comments.userID",
+        "name photoUrl",
+      );
 
       res.status(201).json({
         message: "Comment added successfully",
-        comments: image.comments,
+        comments: updatedImage.comments,
       });
     } catch (err) {
       res

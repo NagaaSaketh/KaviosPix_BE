@@ -11,7 +11,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   }),
 );
@@ -32,6 +32,7 @@ app.use("/", oauthRouter);
 app.use("/", profileRouter);
 app.use("/", albumRouter);
 app.use("/", imageRouter);
+app.use("/uploads", express.static("uploads"));
 
 initialiseDataBase();
 
@@ -39,6 +40,6 @@ app.get("/", (req, res) => {
   res.send("KaviosPix Backend");
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => console.log("Server is running on", PORT));

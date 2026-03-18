@@ -139,8 +139,8 @@ albumRouter.get(
         }
       }
 
-      const images = await Image.find(query);
-
+      const images = await Image.find(query).populate("comments.userID", "name photoUrl");
+      
       if (images.length === 0) {
         return res.status(404).json({
           message: "No images found!",
@@ -187,7 +187,7 @@ albumRouter.put("/albums/:albumID", verifyAccessToken, async (req, res) => {
 
     res.status(200).json({
       message: "Description updated successfully!",
-      description: album.description,
+      album,
     });
   } catch (err) {
     res.status(500).json({

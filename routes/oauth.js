@@ -90,7 +90,6 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         secure: process.env.NODE_ENV === "production",
         maxAge: 7 * 24 * 60 * 60 * 1000,
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        secure: process.env.NODE_ENV === "production",
       });
 
       return res.redirect(`${process.env.FRONTEND_URL}/`);

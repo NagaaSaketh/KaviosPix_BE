@@ -17,7 +17,6 @@ app.use(
 );
 
 const oauthRouter = require("./routes/oauth");
-const profileRouter = require("./routes/profile");
 const albumRouter = require("./routes/album");
 const imageRouter = require("./routes/image");
 
@@ -29,7 +28,6 @@ if (!fs.existsSync("uploads")) {
 
 
 app.use("/", oauthRouter);
-app.use("/", profileRouter);
 app.use("/", albumRouter);
 app.use("/", imageRouter);
 app.use("/uploads", express.static("uploads"));

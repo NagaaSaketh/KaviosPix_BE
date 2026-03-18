@@ -50,7 +50,7 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         redirect_uri: process.env.GOOGLE_REDIRECT_URI,
         grant_type: "authorization_code",
       },
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } },
     );
 
     const accessToken = tokenResponse.data.access_token;
@@ -62,7 +62,7 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     const googleData = googleUserResponse.data;
@@ -89,7 +89,8 @@ oauthRouter.get("/auth/google/callback", async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 7 * 24 * 60 * 60 * 1000,
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        secure: process.env.NODE_ENV === "production",
       });
 
       return res.redirect(`${process.env.FRONTEND_URL}/`);

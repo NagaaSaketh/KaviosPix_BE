@@ -1,6 +1,5 @@
 const express = require("express");
 const fs = require("fs");
-const path = require("path");
 const cloudinary = require("../config/cloudinary");
 
 const upload = require("../middlewares/upload");
@@ -9,8 +8,6 @@ const Album = require("../models/album.model");
 const { verifyAccessToken } = require("../middlewares/oauth");
 
 const imageRouter = express.Router();
-
-const fs = require("fs");
 
 imageRouter.post(
   "/albums/:albumID/images",

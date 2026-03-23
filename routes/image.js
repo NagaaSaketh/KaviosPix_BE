@@ -10,6 +10,8 @@ const { verifyAccessToken } = require("../middlewares/oauth");
 
 const imageRouter = express.Router();
 
+const fs = require("fs");
+
 imageRouter.post(
   "/albums/:albumID/images",
   verifyAccessToken,
@@ -28,13 +30,14 @@ imageRouter.post(
       const hasAccess =
         album.ownerID.toString() === userID.toString() ||
         album.sharedUsers.some(
-          (u) => u.userID.toString() === userID.toString(),
+          (u) => u.userID.toString() === userID.toString()
         );
 
       if (!hasAccess) {
-        return res
-          .status(403)
-          .json({ message: "You do not have access to this album" });
+        if (req.file?.path) fs.unlinkSync(req.file.path); 
+        return res.status(403).json({
+          message: "You do not have access to this album",
+        });
       }
 
       if (!req.file) {
@@ -45,6 +48,7 @@ imageRouter.post(
 
       const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
       if (!allowedTypes.includes(req.file.mimetype)) {
+        fs.unlinkSync(req.file.path); 
         return res.status(400).json({ message: "Invalid image type" });
       }
 
@@ -53,20 +57,25 @@ imageRouter.post(
         try {
           parsedTags = JSON.parse(tags);
         } catch {
+          fs.unlinkSync(req.file.path); 
           return res.status(400).json({ message: "Invalid tags format" });
         }
       }
+
 
 
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "kaviospix",
       });
 
+      fs.unlinkSync(req.file.path); 
+
+
 
       const image = new Image({
         albumID: album._id,
         name: result.original_filename,
-        imageUrl: result.secure_url, 
+        imageUrl: result.secure_url,
         public_id: result.public_id,
         tags: parsedTags,
         person,
@@ -82,12 +91,17 @@ imageRouter.post(
       });
     } catch (err) {
       console.error(err);
+
+      if (req.file?.path) {
+        fs.unlinkSync(req.file.path);
+      }
+
       res.status(500).json({
         message: "Failed to upload image",
         error: err.message,
       });
     }
-  },
+  }
 );
 
 imageRouter.put(

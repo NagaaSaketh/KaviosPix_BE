@@ -1,15 +1,7 @@
 const multer = require("multer");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
+const multer = require("multer");
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "kaviospix",
-    allowed_formats: ["jpg", "jpeg", "png", "gif"],
-  },
-});
-
-const upload = multer({ storage });
+const upload = multer({ dest: "temp/" });
 
 module.exports = upload;

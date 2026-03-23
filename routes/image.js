@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const cloudinary = require("../config/cloudinary");
 
 const upload = require("../middlewares/upload");
 const Image = require("../models/image.model");
@@ -31,9 +32,6 @@ imageRouter.post(
         );
 
       if (!hasAccess) {
-        if (req.file?.path) {
-          fs.unlinkSync(req.file.path);
-        }
         return res
           .status(403)
           .json({ message: "You do not have access to this album" });
@@ -43,36 +41,37 @@ imageRouter.post(
         return res.status(400).json({ message: "Image file is required" });
       }
 
-      const filePath = req.file.path;
 
-      const allowedExts = [".jpg", ".jpeg", ".png", ".gif"];
-      const ext = path.extname(filePath).toLowerCase();
 
-      if (!allowedExts.includes(ext)) {
-        fs.unlinkSync(filePath);
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(req.file.mimetype)) {
         return res.status(400).json({ message: "Invalid image type" });
       }
-
-      const stats = fs.statSync(filePath);
-      const fileSize = stats.size;
 
       let parsedTags = [];
       if (tags) {
         try {
           parsedTags = JSON.parse(tags);
         } catch {
-          fs.unlinkSync(filePath);
           return res.status(400).json({ message: "Invalid tags format" });
         }
       }
 
+
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "kaviospix",
+      });
+
+
       const image = new Image({
         albumID: album._id,
-        name: req.file.filename,
+        name: result.original_filename,
+        imageUrl: result.secure_url, 
+        public_id: result.public_id,
         tags: parsedTags,
         person,
         isFavorite,
-        size: fileSize,
+        size: result.bytes,
       });
 
       await image.save();
@@ -82,6 +81,7 @@ imageRouter.post(
         image,
       });
     } catch (err) {
+      console.error(err);
       res.status(500).json({
         message: "Failed to upload image",
         error: err.message,

@@ -51,7 +51,10 @@ const imageSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    imageUrl: String,
+    public_id: String,
   },
+
   { timestamps: true },
 );
 

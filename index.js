@@ -20,17 +20,13 @@ const oauthRouter = require("./routes/oauth");
 const albumRouter = require("./routes/album");
 const imageRouter = require("./routes/image");
 
-const fs = require("fs");
 
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
-}
 
 
 app.use("/", oauthRouter);
 app.use("/", albumRouter);
 app.use("/", imageRouter);
-app.use("/uploads", express.static("uploads"));
+
 
 initialiseDataBase();
 
